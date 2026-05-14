@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stream Alert</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 30px;
+      overflow: hidden;
+    }
+
+    #alert-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    #alert-box.hiding {
+      animation: popOut 0.4s ease-in forwards;
+    }
+
+    /* Icono animado */
+    .icon-wrapper {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px #7b2ff799, 0 0 60px #00d2ff55;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .icon-wrapper svg {
+      width: 40px;
+      height: 40px;
+      fill: white;
+    }
+
+    /* Tarjeta principal */
+    .card {
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a0f2e 100%);
+      border: 2px solid #7b2ff7;
+      border-radius: 16px;
+      padding: 16px 32px;
+      text-align: center;
+      box-shadow:
+        0 0 20px #7b2ff755,
+        0 0 60px #7b2ff722,
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      min-width: 320px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(transparent, #7b2ff722, transparent 30%);
+      animation: rotate 3s linear infinite;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #00d2ff;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .nombre {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      color: #ffffff;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px #7b2ff7, 0 0 40px #7b2ff799;
+      line-height: 1;
+    }
+
+    .monto {
+      font-family: 'Nunito', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: #00d2ff;
+      text-shadow: 0 0 10px #00d2ff99;
+      margin-top: 4px;
+    }
+
+    /* Partículas */
+    .particles {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00d2ff;
+      animation: floatUp 1.5s ease-out forwards;
+    }
+
+    /* Keyframes */
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.5) translateY(-20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes popOut {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to   { opacity: 0; transform: scale(0.8) translateY(-30px); }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 30px #7b2ff799, 0 0 60px #00d2ff55; }
+      50%       { box-shadow: 0 0 50px #7b2ff7bb, 0 0 100px #00d2ff88; }
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-80px) scale(0.3); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="alert-box">
+    <div class="icon-wrapper">
+      <!-- Icono de corazón / donación -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+    </div>
+
+    <div class="card">
+      <div class="particles" id="particles"></div>
+      <div class="card-inner">
+        <div class="label">¡Nueva donación!</div>
+        <div class="nombre" id="nombre-text">—</div>
+        <div class="monto" id="monto-text">$0 CLP</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const box = document.getElementById("alert-box");
+    const nombreEl = document.getElementById("nombre-text");
+    const montoEl = document.getElementById("monto-text");
+    const particlesEl = document.getElementById("particles");
+
+    let showing = false;
+    let queue = [];
+
+    function spawnParticles() {
+      particlesEl.innerHTML = "";
+      const colors = ["#00d2ff", "#7b2ff7", "#ff6b9d", "#ffd700"];
+      for (let i = 0; i < 12; i++) {
+        const p = document.createElement("div");
+        p.className = "particle";
+        p.style.left = Math.random() * 100 + "%";
+        p.style.top = Math.random() * 100 + "%";
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.animationDelay = Math.random() * 0.5 + "s";
+        p.style.width = p.style.height = (4 + Math.random() * 6) + "px";
+        particlesEl.appendChild(p);
+      }
+    }
+
+    function showAlert(data) {
+      showing = true;
+      nombreEl.textContent = data.nombre;
+      montoEl.textContent = `$${Number(data.monto).toLocaleString("es-CL")} ${data.moneda}`;
+
+      box.classList.remove("hiding");
+      box.style.display = "flex";
+      spawnParticles();
+
+      setTimeout(() => {
+        box.classList.add("hiding");
+        setTimeout(() => {
+          box.style.display = "none";
+          box.classList.remove("hiding");
+          showing = false;
+          processQueue();
+        }, 400);
+      }, 6000);
+    }
+
+    function processQueue() {
+      if (queue.length > 0 && !showing) {
+        showAlert(queue.shift());
+      }
+    }
+
+    // Polling al servidor cada 3 segundos
+    async function poll() {
+      try {
+        const res = await fetch("/next-alert");
+        const data = await res.json();
+        if (data) {
+          queue.push(data);
+          if (!showing) processQueue();
+        }
+      } catch (e) {}
+    }
+
+    setInterval(poll, 3000);
+  </script>
+</body>
+</html>
